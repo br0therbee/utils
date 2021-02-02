@@ -83,7 +83,7 @@ class FunctionResult(object):
             def __cache(*args, **kwargs):
                 if not hasattr(func, '__result_lock'):
                     func.__result_lock = RLock()
-                key = func, makekeys(args, kwargs)
+                key = func, makekeys(args, kwargs, func)
                 if key not in cls._caches or time.time() - cls._caches[key][1] > duration:
                     with func.__result_lock:
                         result = func(*args, **kwargs)

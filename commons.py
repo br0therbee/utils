@@ -2,6 +2,8 @@
 # @Author      : BrotherBe
 # @Time        : 2020/8/17 22:06
 # @Version     : Python 3.8.5
+import copy
+import inspect
 import json
 import math
 import multiprocessing
@@ -101,8 +103,38 @@ def is_windows():
     return platform.system().lower() == 'windows'
 
 
-def makekeys(args: tuple, kwargs: dict) -> tuple:
-    for item in sorted(kwargs.items(), key=lambda x: x[0]):
+def makekeys(args: tuple, kwargs: dict, func) -> tuple:
+    makekeys.cache = {}
+    # 妥协,直接根据名称过滤,实在找不到更好的过滤办法
+    makekeys.filter_args = 'self', 'cls'
+
+    def _default_kwargs():
+        __args_num = 0
+        __default_kwargs = {}
+        signatures = inspect.signature(func)
+        for _, parameter in signatures.parameters.items():
+            name = parameter.name
+            value = parameter.default
+            if value == inspect._empty:
+                if name not in makekeys.filter_args:
+                    __args_num += 1
+            else:
+                __default_kwargs[name] = value
+        return __args_num, __default_kwargs
+
+    def _sort_kwargs():
+        nonlocal args
+        pos_kwargs = args[args_num:]
+        args = args[:args_num]
+        for (key, value), pos_kwarg in zip(copy.deepcopy(default_kwargs).items(), pos_kwargs):
+            default_kwargs[key] = pos_kwarg
+        default_kwargs.update(kwargs)
+
+    if func not in makekeys.cache:
+        makekeys.cache[func] = _default_kwargs()
+    args_num, default_kwargs = copy.deepcopy(makekeys.cache[func])
+    _sort_kwargs()
+    for item in sorted(default_kwargs.items(), key=lambda x: x[0]):
         args += item
     return args
 

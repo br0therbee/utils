@@ -17,7 +17,7 @@ class FlyWeight(type):
             cls._flyweight_lock = RLock()
             cls._instances = {}
         with cls._flyweight_lock:
-            keys = makekeys(args, kwargs)
+            keys = makekeys(args, kwargs, cls.__init__)
             if keys not in cls._instances:
                 cls._instances[keys] = super().__call__(*args, **kwargs)
         return cls._instances[keys]
