@@ -102,21 +102,17 @@ class RequestManager(object):
                              auth=auth, timeout=timeout, allow_redirects=allow_redirects, proxies=proxies,
                              hooks=hooks, stream=stream, verify=verify, cert=cert, json=json)
 
-    def _request(self, *args, **kwargs):
+    def _request(self, *args, **kwargs) -> requests.Response:
         try:
             _, frame_num = get_frame(__file__)
             # 调整请求参数
             for subclass in IAdapter.__subclasses__():
                 kwargs = subclass().adjust(self, *args, **kwargs)
-            stream = kwargs.get('stream')
             if self._show_headers:
                 self.logger.debug(f'\nheaders = {json_.dumps(kwargs.get("headers"), indent=4)}', stacklevel=frame_num)
-            if stream is True:
-                resp = run(self._times)(self._session.request)(*args, **kwargs)  # type: requests.Response
-            else:
-                durations, resp = timer(run(self._times)(self._session.request))(*args, **kwargs)
-                if self._show_response:
-                    self.logger.debug(Response(resp, durations).show(), stacklevel=frame_num)
+            durations, resp = timer(run(self._times)(self._session.request))(*args, **kwargs)
+            if self._show_response:
+                self.logger.debug(Response(resp, durations).show(), stacklevel=frame_num)
         except Exception as e:
             raise NetworkRequestException(e)
         return resp
