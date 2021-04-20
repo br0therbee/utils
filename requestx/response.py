@@ -28,6 +28,9 @@ class Response(object):
         traces = [f'\n请求消耗总时间: {self._durations}\n\t']
         for history in (*self._response.history, self._response):
             duration = history.elapsed.total_seconds()
+            length = history.headers.get("Content-Length")
+            if length:
+                length = f'{int(length):,}'
             traces.append(f'{history.status_code}  {history.request.method}  {duration:.3f} s  '
-                          f'{int(history.headers["Content-Length"]):,} bytes  {history.url}\n\t')
+                          f'{length} bytes  {history.url}\n\t')
         return ''.join(traces).rstrip('\t')
